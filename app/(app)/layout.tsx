@@ -16,21 +16,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false)
 
   useEffect(() => {
-    // Check session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.push('/login')
-        return
+    // onAuthStateChange fires INITIAL_SESSION on mount with the current session.
+    // This is more reliable than getSession() because with soft navigation
+    // (router.push) the singleton client already holds the session in memory.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'INITIAL_SESSION') {
+          if (!session) {
+            router.push('/login')
+          } else {
+            await loadProfile(session.user.id, session.user.email)
+          }
+        } else if (event === 'SIGNED_IN' && session) {
+          await loadProfile(session.user.id, session.user.email)
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          router.push('/login')
+        }
       }
-      loadProfile(session.user.id, session.user.email)
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        router.push('/login')
-      }
-    })
+    )
 
     return () => subscription.unsubscribe()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps

@@ -32,7 +32,7 @@ export default function LoginPage() {
         setError(error.message)
         setLoading(false)
       } else {
-        window.location.href = '/dashboard'
+        router.push('/dashboard')
       }
     } else {
       const { error } = await supabase.auth.signUp({

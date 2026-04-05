@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          // Update request cookies so server components see refreshed session
+          // Update the request so server components see the refreshed session
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -26,20 +26,29 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh the session — this is the critical call.
-  // It validates the access token and refreshes it if expired,
-  // writing updated cookies to both the request (for server components)
-  // and the response (for the browser).
-  await supabase.auth.getUser()
+  // Refresh session. Must be called before any redirect logic.
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  // Redirect unauthenticated users away from protected routes
+  const isPublicPath =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon')
+
+  if (!user && !isPublicPath) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    /*
-     * Run on all routes except Next.js internals and static files.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -16,19 +16,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false)
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION on mount with the current session.
-    // This is more reliable than getSession() because with soft navigation
-    // (router.push) the singleton client already holds the session in memory.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (event === 'INITIAL_SESSION') {
           if (!session) {
             router.push('/login')
           } else {
-            await loadProfile(session.user.id, session.user.email)
+            // Unblock the UI immediately with session data so the spinner
+            // doesn't depend on the DB round-trip completing first.
+            setUser({
+              id: session.user.id,
+              full_name: session.user.user_metadata?.full_name
+                ?? session.user.email
+                ?? null,
+              avatar_url: session.user.user_metadata?.avatar_url ?? null,
+              role: (session.user.user_metadata?.role as User['role']) ?? 'rep',
+              created_at: session.user.created_at,
+              updated_at: new Date().toISOString(),
+            })
+            setLoading(false)
+            // Load the full DB profile in the background and update.
+            loadProfile(session.user.id, session.user.email)
           }
-        } else if (event === 'SIGNED_IN' && session) {
-          await loadProfile(session.user.id, session.user.email)
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           router.push('/login')
@@ -40,35 +49,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadProfile(userId: string, email?: string | null) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    if (profile) {
-      setUser(profile as User)
-    } else {
-      // Insert the profile if trigger didn't create it
+      if (profile) {
+        setUser(profile as User)
+        return
+      }
+
+      // Profile row doesn't exist yet — create it.
       const { data: newProfile } = await supabase
         .from('users')
-        .upsert({
-          id: userId,
-          full_name: email ?? null,
-          role: 'rep',
-        })
+        .upsert({ id: userId, full_name: email ?? null, role: 'rep' })
         .select()
         .single()
-      setUser(newProfile as User ?? {
-        id: userId,
-        full_name: email ?? null,
-        avatar_url: null,
-        role: 'rep',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+
+      if (newProfile) setUser(newProfile as User)
+    } catch {
+      // Non-fatal: the fallback user set above is sufficient to render.
     }
-    setLoading(false)
   }
 
   useEffect(() => {

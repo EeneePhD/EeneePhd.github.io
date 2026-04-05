@@ -5,30 +5,54 @@ import { getUserRecentActivities, getOverdueTasksCount } from '@/lib/supabase/ac
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 import { Skeleton } from '@/components/ui/skeleton'
 import { redirect } from 'next/navigation'
+import type { DashboardMetrics } from '@/lib/types/database.types'
+
+const EMPTY_METRICS: DashboardMetrics = {
+  totalOpenPipeline: 0,
+  weightedPipeline: 0,
+  dealsWonThisMonth: 0,
+  dealsWonLastMonth: 0,
+  revenueWonThisMonth: 0,
+  avgDealSize: 0,
+  closeRate: 0,
+  overdueTasksCount: 0,
+}
 
 async function DashboardData() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [metrics, pipelineByStage, topDeals, recentActivities, overdueCount] =
-    await Promise.all([
-      getDashboardMetrics(user.id),
-      getPipelineByStage(),
-      getTopOpenDeals(5),
-      getUserRecentActivities(user.id, 10),
-      getOverdueTasksCount(user.id),
-    ])
+  try {
+    const [metrics, pipelineByStage, topDeals, recentActivities, overdueCount] =
+      await Promise.all([
+        getDashboardMetrics(user.id).catch(() => EMPTY_METRICS),
+        getPipelineByStage().catch(() => []),
+        getTopOpenDeals(5).catch(() => []),
+        getUserRecentActivities(user.id, 10).catch(() => []),
+        getOverdueTasksCount(user.id).catch(() => 0),
+      ])
 
-  return (
-    <DashboardClient
-      metrics={metrics}
-      pipelineByStage={pipelineByStage}
-      topDeals={topDeals ?? []}
-      recentActivities={recentActivities ?? []}
-      overdueCount={overdueCount}
-    />
-  )
+    return (
+      <DashboardClient
+        metrics={metrics}
+        pipelineByStage={pipelineByStage}
+        topDeals={topDeals ?? []}
+        recentActivities={recentActivities ?? []}
+        overdueCount={overdueCount}
+      />
+    )
+  } catch {
+    return (
+      <DashboardClient
+        metrics={EMPTY_METRICS}
+        pipelineByStage={[]}
+        topDeals={[]}
+        recentActivities={[]}
+        overdueCount={0}
+      />
+    )
+  }
 }
 
 function DashboardSkeleton() {

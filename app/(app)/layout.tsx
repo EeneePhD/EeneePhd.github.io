@@ -16,40 +16,58 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false)
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const authUser = session?.user
-      if (!authUser) {
+    // Check session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         router.push('/login')
         return
       }
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single()
-
-      if (profile) {
-        setUser(profile as User)
-      } else {
-        setUser({
-          id: authUser.id,
-          full_name: authUser.email ?? null,
-          avatar_url: null,
-          role: 'rep',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-      }
-      setLoading(false)
-    }
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') router.push('/login')
+      loadProfile(session.user.id, session.user.email)
     })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.push('/login')
+      } else if (event === 'SIGNED_IN' && session) {
+        loadProfile(session.user.id, session.user.email)
+      }
+    })
+
     return () => subscription.unsubscribe()
-  }, [supabase, router])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadProfile(userId: string, email?: string | null) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (profile) {
+      setUser(profile as User)
+    } else {
+      // Insert the profile if trigger didn't create it
+      const { data: newProfile } = await supabase
+        .from('users')
+        .upsert({
+          id: userId,
+          full_name: email ?? null,
+          role: 'rep',
+        })
+        .select()
+        .single()
+      setUser(newProfile as User ?? {
+        id: userId,
+        full_name: email ?? null,
+        avatar_url: null,
+        role: 'rep',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

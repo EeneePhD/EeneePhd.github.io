@@ -27,10 +27,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
+      if (event === 'SIGNED_OUT') {
         router.push('/login')
-      } else if (event === 'SIGNED_IN' && session) {
-        loadProfile(session.user.id, session.user.email)
       }
     })
 

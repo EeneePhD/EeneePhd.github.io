@@ -87,12 +87,14 @@ export function ContactForm({ open, onClose, contact, onSaved }: ContactFormProp
   }, [open, contact, supabase, reset])
 
   async function onSubmit(values: ContactFormValues) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
     const payload = {
       ...values,
       email: values.email || null,
       phone: values.phone || null,
       company_id: values.company_id || null,
-      owner_id: values.owner_id || null,
+      // Default to current user so RLS owner_id = auth.uid() check passes
+      owner_id: values.owner_id || authUser?.id || null,
       notes: values.notes || null,
     }
 

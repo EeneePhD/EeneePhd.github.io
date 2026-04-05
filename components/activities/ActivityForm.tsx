@@ -168,14 +168,14 @@ export function ActivityForm({
             <div className="space-y-1">
               <Label>Contact</Label>
               <Select
-                value={watch('contact_id') ?? ''}
-                onValueChange={(v) => setValue('contact_id', v)}
+                value={watch('contact_id') || '__none__'}
+                onValueChange={(v) => setValue('contact_id', v === '__none__' ? '' : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Link contact" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No contact</SelectItem>
+                  <SelectItem value="__none__">No contact</SelectItem>
                   {contacts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.first_name} {c.last_name}
@@ -187,14 +187,14 @@ export function ActivityForm({
             <div className="space-y-1">
               <Label>Deal</Label>
               <Select
-                value={watch('deal_id') ?? ''}
-                onValueChange={(v) => setValue('deal_id', v)}
+                value={watch('deal_id') || '__none__'}
+                onValueChange={(v) => setValue('deal_id', v === '__none__' ? '' : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Link deal" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No deal</SelectItem>
+                  <SelectItem value="__none__">No deal</SelectItem>
                   {deals.map((d) => (
                     <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
                   ))}

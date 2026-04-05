@@ -158,10 +158,10 @@ export function DealForm({ open, onClose, deal, defaultStageId, onSaved }: DealF
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Contact</Label>
-              <Select value={watch('contact_id') ?? ''} onValueChange={(v) => setValue('contact_id', v)}>
+              <Select value={watch('contact_id') || '__none__'} onValueChange={(v) => setValue('contact_id', v === '__none__' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Link contact" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No contact</SelectItem>
+                  <SelectItem value="__none__">No contact</SelectItem>
                   {contacts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>
                   ))}
@@ -170,10 +170,10 @@ export function DealForm({ open, onClose, deal, defaultStageId, onSaved }: DealF
             </div>
             <div className="space-y-1">
               <Label>Company</Label>
-              <Select value={watch('company_id') ?? ''} onValueChange={(v) => setValue('company_id', v)}>
+              <Select value={watch('company_id') || '__none__'} onValueChange={(v) => setValue('company_id', v === '__none__' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Link company" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No company</SelectItem>
+                  <SelectItem value="__none__">No company</SelectItem>
                   {companies.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
@@ -195,10 +195,10 @@ export function DealForm({ open, onClose, deal, defaultStageId, onSaved }: DealF
 
           <div className="space-y-1">
             <Label>Owner</Label>
-            <Select value={watch('owner_id') ?? ''} onValueChange={(v) => setValue('owner_id', v)}>
+            <Select value={watch('owner_id') || '__none__'} onValueChange={(v) => setValue('owner_id', v === '__none__' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Assign owner" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="__none__">Unassigned</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>{u.full_name ?? u.id}</SelectItem>
                 ))}

@@ -148,14 +148,14 @@ export function ContactForm({ open, onClose, contact, onSaved }: ContactFormProp
             <div className="space-y-1">
               <Label>Company</Label>
               <Select
-                value={watch('company_id') ?? ''}
-                onValueChange={(v) => setValue('company_id', v)}
+                value={watch('company_id') || '__none__'}
+                onValueChange={(v) => setValue('company_id', v === '__none__' ? '' : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select company" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No company</SelectItem>
+                  <SelectItem value="__none__">No company</SelectItem>
                   {companies.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
@@ -165,14 +165,14 @@ export function ContactForm({ open, onClose, contact, onSaved }: ContactFormProp
             <div className="space-y-1">
               <Label>Owner</Label>
               <Select
-                value={watch('owner_id') ?? ''}
-                onValueChange={(v) => setValue('owner_id', v)}
+                value={watch('owner_id') || '__none__'}
+                onValueChange={(v) => setValue('owner_id', v === '__none__' ? '' : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Assign owner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="__none__">Unassigned</SelectItem>
                   {users.map((u) => (
                     <SelectItem key={u.id} value={u.id}>{u.full_name ?? u.id}</SelectItem>
                   ))}
@@ -199,14 +199,14 @@ export function ContactForm({ open, onClose, contact, onSaved }: ContactFormProp
             <div className="space-y-1">
               <Label>Lead source</Label>
               <Select
-                value={watch('lead_source') ?? ''}
-                onValueChange={(v) => setValue('lead_source', v as ContactFormValues['lead_source'])}
+                value={watch('lead_source') ?? '__none__'}
+                onValueChange={(v) => setValue('lead_source', v === '__none__' ? undefined : v as ContactFormValues['lead_source'])}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unknown</SelectItem>
+                  <SelectItem value="__none__">Unknown</SelectItem>
                   <SelectItem value="cold_call">Cold call</SelectItem>
                   <SelectItem value="referral">Referral</SelectItem>
                   <SelectItem value="inbound">Inbound</SelectItem>
